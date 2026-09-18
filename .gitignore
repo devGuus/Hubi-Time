@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Hubi Time - especifico do projeto
+.env
+*.exe
+/build_output/
+/dist_exe/
+logs/
+*.log
+.pytest_cache/
+
