@@ -95,6 +95,8 @@ auth.users (Supabase Auth)
 
 Todas as tabelas tem **Row Level Security** habilitado com policies `auth.uid() = user_id`. Veja `supabase/migrations/20260101000013_row_level_security.sql`.
 
+> RLS e GRANT sao camadas independentes no Postgres: uma policy so e avaliada depois que o papel `authenticated` ja tem o privilegio basico (`SELECT`/`INSERT`/`UPDATE`/`DELETE`) na tabela. A migration `20260101000014_grants.sql` concede exatamente esses privilegios - sem ela, toda consulta falha com `permission denied for table X`, mesmo com as policies corretas.
+
 ---
 
 ## Requisitos
