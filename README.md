@@ -59,7 +59,9 @@ Hubi-Time/
 |-- config/                  # settings.py (.env) e constants.py (enums)
 |-- database/
 |   |-- supabase_client.py   # cliente Supabase singleton
-|   |-- migrations/          # scripts SQL numerados (0001..0013)
+|-- supabase/
+|   |-- config.toml          # configuracao do projeto para a Supabase CLI
+|   |-- migrations/          # scripts SQL, aplicados via `supabase db push`
 |-- models/                  # dataclasses (WorkRecord, SalaryEntry, ...)
 |-- repositories/            # unico ponto de acesso ao Supabase
 |-- services/                # regras de negocio (auth, work, calculation, salary, report, audit, notification)
@@ -91,7 +93,7 @@ auth.users (Supabase Auth)
   `-- audit_log              (N)  auditoria generica (perfil, config, salario, jornada)
 ```
 
-Todas as tabelas tem **Row Level Security** habilitado com policies `auth.uid() = user_id`. Veja `database/migrations/0013_row_level_security.sql`.
+Todas as tabelas tem **Row Level Security** habilitado com policies `auth.uid() = user_id`. Veja `supabase/migrations/20260101000013_row_level_security.sql`.
 
 ---
 
@@ -106,27 +108,26 @@ Todas as tabelas tem **Row Level Security** habilitado com policies `auth.uid() 
 ## Configuracao do Supabase
 
 1. Crie um projeto no Supabase.
-2. Va em **SQL Editor** e execute, **nesta ordem**, todos os arquivos de `database/migrations/`:
+2. Aplique as migrations em `supabase/migrations/` (13 arquivos, executados em ordem cronologica pelo nome). Duas formas de fazer isso:
+
+   **Opcao A - Supabase CLI (recomendado):**
+   ```powershell
+   # instala a CLI sob demanda via npx (ou "npm install -g supabase" para uso frequente)
+   npx supabase login
+   npx supabase link --project-ref SEU_PROJECT_REF
+   npx supabase db push
    ```
-   0001_extensions.sql
-   0002_profiles.sql
-   0003_user_settings.sql
-   0004_work_schedule_history.sql
-   0005_salary_history.sql
-   0006_overtime_rules.sql
-   0007_work_records.sql
-   0008_work_record_history.sql
-   0009_holidays.sql
-   0010_notifications.sql
-   0011_audit_log.sql
-   0012_functions_and_triggers.sql
-   0013_row_level_security.sql
-   ```
+   O `PROJECT_REF` e o identificador do projeto, visivel na URL do painel Supabase (`app.supabase.com/project/SEU_PROJECT_REF`) ou em **Project Settings > General**. O `db push` aplica exatamente os arquivos de `supabase/migrations/` ao banco remoto, na ordem do timestamp no nome de cada arquivo, e registra o que ja foi aplicado - rodar de novo no futuro so aplica migrations novas.
+
+   **Opcao B - SQL Editor manual:** abra **SQL Editor** no painel do Supabase e execute, um de cada vez e **nesta ordem**, o conteudo de cada arquivo de `supabase/migrations/` (ordene pelo prefixo numerico/timestamp do nome do arquivo).
+
 3. Em **Authentication > Providers**, mantenha o provider **Email** habilitado.
 4. Em **Authentication > Settings**, habilite **Confirm email** (obrigatorio para o fluxo de verificacao por codigo OTP).
 5. Copie a **Project URL** e a chave **anon/public** em **Project Settings > API** - voce vai usa-las no `.env` (veja abaixo).
 
 **Nunca use a `service_role key` no aplicativo desktop.** Ela nao e necessaria em nenhum momento - toda a seguranca e feita via RLS + a chave anon.
+
+> `supabase/` tambem contem `config.toml` (gerado por `supabase init`) e pastas de uso interno da CLI (`.branches`, `.temp`) que ja estao no `.gitignore` proprio dessa pasta - nao precisam de atencao manual.
 
 ---
 
@@ -135,7 +136,19 @@ Todas as tabelas tem **Row Level Security** habilitado com policies `auth.uid() 
 - O cadastro, login, verificacao por codigo (OTP), recuperacao de senha e troca de senha usam **exclusivamente o Supabase Auth** (`supabase.auth.*`). Nao existe nenhuma logica caseira de senha no codigo.
 - O codigo de verificacao de 6 digitos enviado por e-mail (cadastro e recuperacao de senha) e o mecanismo nativo do Supabase (`verify_otp` com `type="signup"` e `type="recovery"`).
 - **Configuracao de e-mail/SMTP:** por padrao o Supabase usa um servidor de e-mail compartilhado com limites baixos, adequado apenas para testes. Para producao, configure um provedor SMTP proprio em **Project Settings > Auth > SMTP Settings** (ex.: SendGrid, Amazon SES, Postmark). **Essas credenciais SMTP devem ser configuradas exclusivamente no painel do Supabase - nunca no codigo do aplicativo.**
-- Voce tambem pode customizar o template do e-mail de confirmacao/recuperacao em **Authentication > Email Templates** para garantir que o codigo OTP apareca claramente no corpo do e-mail (`{{ .Token }}`).
+
+### Template do e-mail de verificacao (obrigatorio)
+
+Por padrao, o Supabase envia um e-mail com um **link** de confirmacao (`{{ .ConfirmationURL }}`), que aponta para a "Site URL" do projeto - normalmente `http://localhost:3000`, ou seja, nenhum site real. Como o Hubi Time usa o fluxo de **codigo digitado no app** (nao o link), e preciso trocar o template para exibir `{{ .Token }}` em vez do botao de confirmacao. Sem essa troca, o usuario recebe um link quebrado em vez do codigo de 6 digitos.
+
+Os templates prontos ja estao versionados em `supabase/email_templates/`. Para aplicar:
+
+1. No painel do Supabase, va em **Authentication > Email Templates**.
+2. Abra **Confirm signup**, apague o conteudo e cole o HTML de [`supabase/email_templates/confirm_signup.html`](supabase/email_templates/confirm_signup.html). Salve.
+3. Abra **Reset Password**, apague o conteudo e cole o HTML de [`supabase/email_templates/reset_password.html`](supabase/email_templates/reset_password.html). Salve.
+4. Em **Authentication > URL Configuration**, o campo "Site URL" pode ficar com qualquer valor placeholder (ex.: `http://localhost`) - ele nunca e acessado pelo app, ja que o fluxo e 100% por codigo.
+
+Isso e configuracao feita direto no painel do Supabase - nao ha nenhuma chamada de API/credencial que permita automatizar essa etapa pelo terminal.
 
 ---
 
@@ -203,6 +216,32 @@ pyinstaller --noconfirm --windowed --name "HubiTime" ^
 O executavel sera gerado em `dist/HubiTime/`. Copie um arquivo `.env` real (nao versionado) para a mesma pasta do `.exe` antes de distribuir/executar, com as credenciais do seu projeto Supabase.
 
 > Dica: para um instalador unico (`--onefile`), adicione a flag `--onefile`, mas prefira `--windowed` (sem `--onefile`) em producao, pois a inicializacao fica mais rapida.
+
+---
+
+## Distribuicao gratuita (GitHub Releases)
+
+O workflow `.github/workflows/release.yml` builda o `.exe` automaticamente e publica no GitHub Releases sempre que uma tag de versao e enviada - distribuicao publica, gratuita e sem servidor proprio.
+
+**Configuracao (uma vez so):**
+
+1. O repositorio precisa estar **publico** no GitHub (minutos de Actions ilimitados e gratuitos para repositorios publicos).
+2. Em **Settings > Secrets and variables > Actions**, crie dois repository secrets:
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+
+   Sim, a chave `anon`/`publishable` pode ser embutida no `.exe` distribuido publicamente - ela foi desenhada para isso pela Supabase. A protecao dos dados vem do RLS (cada usuario so acessa o que e seu), nao do sigilo dessa chave. **Nunca** faca isso com a `service_role key`.
+
+**Para lancar uma nova versao:**
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Em poucos minutos, o Release `v1.0.0` aparece na aba **Releases** do repositorio com um `HubiTime-v1.0.0-windows.zip` pronto para download - esse e o link que voce compartilha com qualquer pessoa, em qualquer lugar. Cada usuario baixa, extrai e executa `HubiTime.exe`; como todos usam a mesma `SUPABASE_URL`/`SUPABASE_ANON_KEY`, todos se conectam ao mesmo projeto (cada um com sua propria conta, isolada por RLS).
+
+**Sobre o aviso do Windows SmartScreen:** como o `.exe` nao e assinado digitalmente (certificados de assinatura de codigo custam ~US$100-400/ano, o que nao se justifica para um projeto gratuito de baixo uso), o Windows vai exibir "O Windows protegeu seu PC" no primeiro uso. Isso e esperado, nao e um erro - oriente quem for baixar a clicar em **Mais informacoes > Executar assim mesmo**. Se o projeto crescer, [SignPath.io](https://signpath.io) oferece assinatura gratuita para projetos open source elegiveis.
 
 ---
 

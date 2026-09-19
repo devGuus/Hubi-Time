@@ -3,7 +3,10 @@ PySide6==6.8.2
 pyqtgraph==0.13.7
 
 # --- Supabase / Backend ---
-supabase==2.7.4
+# >=2.10 e necessario para suportar as novas chaves de API do Supabase
+# (formato sb_publishable_/sb_secret_) - versoes anteriores validam a chave
+# com uma regex que exige o formato JWT antigo e rejeitam as novas chaves.
+supabase==2.31.0
 python-dotenv==1.0.1
 
 # --- Segurança (armazenamento de sessão) ---

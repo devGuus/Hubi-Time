@@ -116,7 +116,11 @@ DEFAULT_WEEKLY_HOURS: dict[str, float] = {
 DEFAULT_MONTHLY_HOURS = 220.0
 
 MIN_PASSWORD_LENGTH = 8
-OTP_CODE_LENGTH = 6
+# Comprimento do codigo OTP enviado por e-mail pelo Supabase Auth. Nao e um
+# padrao fixo do GoTrue - confirme o valor real recebido no e-mail do seu
+# projeto (Authentication > Email Templates > {{ .Token }}) e ajuste aqui
+# se for diferente.
+OTP_CODE_LENGTH = 8
 SESSION_KEYRING_KEY = "supabase_refresh_token"
 SESSION_KEYRING_EMAIL_KEY = "supabase_last_email"
 

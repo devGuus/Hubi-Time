@@ -226,3 +226,8 @@ logs/
 *.log
 .pytest_cache/
 
+# Artefatos do "npx supabase" (Supabase CLI via Node) rodado na raiz do projeto
+node_modules/
+package.json
+package-lock.json
+

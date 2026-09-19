@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from typing import Iterator
 
 import httpx
-from gotrue.errors import AuthApiError, AuthRetryableError
+from supabase_auth.errors import AuthApiError, AuthRetryableError
 
 logger = logging.getLogger(__name__)
 

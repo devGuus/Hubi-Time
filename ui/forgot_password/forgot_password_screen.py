@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QFrame, QLabel, QLineEdit, QPushButton, QStackedWidget, QVBoxLayout, QWidget
 
 from app_container import AppContainer
+from config.constants import OTP_CODE_LENGTH
 from utils.validators import is_valid_email, passwords_match, validate_password
 from widgets.dialogs import show_error, show_success
 from widgets.loading_button import LoadingButton
@@ -112,7 +113,7 @@ class ForgotPasswordScreen(QWidget):
         self._confirm_subtitle.setProperty("role", "subtitle")
         self._confirm_subtitle.setWordWrap(True)
 
-        self._otp = OtpInput(length=6)
+        self._otp = OtpInput(length=OTP_CODE_LENGTH)
 
         self._new_password = QLineEdit()
         self._new_password.setPlaceholderText("Nova senha")
@@ -149,8 +150,8 @@ class ForgotPasswordScreen(QWidget):
         password = self._new_password.text()
         confirm = self._confirm_password.text()
 
-        if len(code) != 6:
-            show_error(self, "Informe os 6 digitos do codigo recebido.")
+        if len(code) != OTP_CODE_LENGTH:
+            show_error(self, f"Informe os {OTP_CODE_LENGTH} digitos do codigo recebido.")
             return
         password_result = validate_password(password)
         if not password_result.is_valid:

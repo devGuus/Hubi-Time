@@ -1,0 +1,25 @@
+<!--
+  Template do e-mail "Confirm signup" do Supabase Auth.
+  Cole este HTML em: Authentication > Email Templates > Confirm signup.
+
+  Usa {{ .Token }} (codigo de 6 digitos), NAO {{ .ConfirmationURL }} - o app
+  Hubi Time pede o codigo diretamente na tela de verificacao, entao nenhum
+  link/site de confirmacao e necessario.
+-->
+<div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #1B2130;">
+  <h2 style="color: #1B2130; margin-bottom: 4px;">Confirme seu cadastro no Hubi Time</h2>
+  <p style="color: #6B7280; margin-top: 0;">
+    Use o codigo abaixo no aplicativo para confirmar seu e-mail e concluir o cadastro.
+  </p>
+
+  <div style="background: #EEF1F8; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
+    <span style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #4F6EF7;">
+      {{ .Token }}
+    </span>
+  </div>
+
+  <p style="color: #6B7280; font-size: 13px;">
+    Este codigo expira em 1 hora e so pode ser usado uma vez.
+    Se voce nao solicitou este cadastro, pode ignorar este e-mail com seguranca.
+  </p>
+</div>

@@ -1,15 +1,17 @@
-"""Campo de codigo OTP (6 digitos individuais, com avanco automatico)."""
+"""Campo de codigo OTP (digitos individuais, com avanco automatico)."""
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QRegularExpression, Qt, Signal
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import QHBoxLayout, QLineEdit, QWidget
 
+from config.constants import OTP_CODE_LENGTH
+
 
 class OtpInput(QWidget):
     completed = Signal(str)
 
-    def __init__(self, length: int = 6, parent: QWidget | None = None):
+    def __init__(self, length: int = OTP_CODE_LENGTH, parent: QWidget | None = None):
         super().__init__(parent)
         self._length = length
         self._boxes: list[QLineEdit] = []

@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from app_container import AppContainer
+from config.constants import OTP_CODE_LENGTH
 from models.user import AuthSession
 from widgets.dialogs import show_error
 from widgets.loading_button import LoadingButton
@@ -50,7 +51,7 @@ class VerifyEmailScreen(QWidget):
         self._subtitle.setWordWrap(True)
         self._subtitle.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self._otp = OtpInput(length=6)
+        self._otp = OtpInput(length=OTP_CODE_LENGTH)
         self._otp.completed.connect(lambda _code: self._on_verify_clicked())
 
         self._verify_button = LoadingButton("Verificar", variant="primary")
@@ -91,8 +92,8 @@ class VerifyEmailScreen(QWidget):
 
     def _on_verify_clicked(self) -> None:
         code = self._otp.value()
-        if len(code) != 6:
-            show_error(self, "Informe os 6 digitos do codigo recebido.")
+        if len(code) != OTP_CODE_LENGTH:
+            show_error(self, f"Informe os {OTP_CODE_LENGTH} digitos do codigo recebido.")
             return
 
         self._verify_button.set_loading(True, "Verificando...")
